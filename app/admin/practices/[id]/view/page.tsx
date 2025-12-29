@@ -159,7 +159,13 @@ export default function PracticeViewPage() {
                 </div>
                 <div className="mb-4">
                   <p className="text-lg font-medium text-gray-900 mb-2">{q.question}</p>
-                  {q.context && (
+                  {q.schema && (
+                    <div className="mt-3 p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+                      <p className="text-sm font-semibold text-gray-700 mb-2">Database Schema:</p>
+                      <pre className="text-sm text-gray-700 whitespace-pre-wrap font-mono bg-white p-3 rounded border border-blue-200">{q.schema}</pre>
+                    </div>
+                  )}
+                  {q.context && !q.schema && (
                     <div className="mt-3 p-4 bg-gray-50 border-l-4 border-indigo-500 rounded">
                       <p className="text-sm font-semibold text-gray-700 mb-2">Context:</p>
                       <pre className="text-sm text-gray-600 whitespace-pre-wrap font-mono">{q.context}</pre>

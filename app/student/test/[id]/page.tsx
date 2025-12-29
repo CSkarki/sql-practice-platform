@@ -102,7 +102,9 @@ export default function TakeTestPage() {
     return <div className="px-4 py-6 sm:px-0">Test not found</div>
   }
 
-  const questions = test.practiceBank.questions || []
+  // Parse questions if they're stored as JSON string
+  const questionsRaw = test.practiceBank.questions || []
+  const questions = typeof questionsRaw === 'string' ? JSON.parse(questionsRaw) : questionsRaw
   const isSubmitted = test.status === 'submitted' || test.status === 'reviewed'
 
   return (
@@ -138,8 +140,9 @@ export default function TakeTestPage() {
             </h3>
             <p className="text-gray-700 mb-4">{q.question}</p>
             {q.schema && (
-              <div className="bg-gray-50 border border-gray-200 rounded p-3 mb-4">
-                <p className="text-sm font-mono text-gray-800">{q.schema}</p>
+              <div className="mt-3 mb-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+                <p className="text-sm font-semibold text-gray-700 mb-2">Database Schema:</p>
+                <pre className="text-sm text-gray-700 whitespace-pre-wrap font-mono bg-white p-3 rounded border border-blue-200">{q.schema}</pre>
               </div>
             )}
             <div>
