@@ -11,20 +11,28 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 }
 
 export async function login(username: string, password: string) {
-  const user = await prisma.user.findUnique({
-    where: { username }
-  })
+  try {
+    // Trim whitespace from username
+    const trimmedUsername = username.trim()
+    
+    const user = await prisma.user.findUnique({
+      where: { username: trimmedUsername }
+    })
 
-  if (!user) {
-    return { error: 'Invalid credentials' }
+    if (!user) {
+      return { error: 'Invalid credentials' }
+    }
+
+    const isValid = await verifyPassword(password, user.password)
+    if (!isValid) {
+      return { error: 'Invalid credentials' }
+    }
+
+    return { user: { id: user.id, username: user.username, role: user.role, name: user.name } }
+  } catch (error) {
+    console.error('Login error:', error)
+    return { error: 'An error occurred during login' }
   }
-
-  const isValid = await verifyPassword(password, user.password)
-  if (!isValid) {
-    return { error: 'Invalid credentials' }
-  }
-
-  return { user: { id: user.id, username: user.username, role: user.role, name: user.name } }
 }
 
 export async function getCurrentUser() {

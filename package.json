@@ -18,7 +18,9 @@
     "db:reset": "prisma migrate reset",
     "password:change": "tsx scripts/change-password.ts",
     "password:change:quick": "tsx scripts/change-password.ts",
-    "password:update-all": "tsx scripts/change-all-passwords.ts"
+    "password:update-all": "tsx scripts/change-all-passwords.ts",
+    "db:verify-users": "tsx scripts/verify-users.ts",
+    "test:login": "tsx scripts/test-login.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.1",
