@@ -24,3 +24,37 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Print Styles */
+@media print {
+  @page {
+    margin: 1cm;
+  }
+
+  body {
+    background: white;
+    color: black;
+  }
+
+  .page-break-inside-avoid {
+    page-break-inside: avoid;
+  }
+
+  .page-break-after {
+    page-break-after: always;
+  }
+
+  /* Hide non-printable elements */
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Ensure proper spacing */
+  .print\:p-4 {
+    padding: 1rem;
+  }
+
+  .print\:mt-8 {
+    margin-top: 2rem;
+  }
+}

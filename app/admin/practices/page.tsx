@@ -78,6 +78,12 @@ export default function PracticesPage() {
                     </div>
                     <div className="flex space-x-2 ml-4">
                       <Link
+                        href={`/admin/practices/${practice.id}/view`}
+                        className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                      >
+                        View/Print
+                      </Link>
+                      <Link
                         href={`/admin/schedule?practiceId=${practice.id}`}
                         className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                       >
