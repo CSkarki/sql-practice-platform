@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Production optimizations
   reactStrictMode: true,
-  swcMinify: true,
+  // Note: swcMinify is enabled by default in Next.js 16, no need to specify
   
   // Security headers
   async headers() {
