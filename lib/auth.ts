@@ -15,22 +15,47 @@ export async function login(username: string, password: string) {
     // Trim whitespace from username
     const trimmedUsername = username.trim()
     
+    if (!trimmedUsername || !password) {
+      return { error: 'Username and password are required' }
+    }
+
+    // Check database connection
+    await prisma.$connect()
+    
     const user = await prisma.user.findUnique({
       where: { username: trimmedUsername }
     })
 
     if (!user) {
+      if (process.env.NODE_ENV === 'production') {
+        console.error('Login attempt failed: User not found', { username: trimmedUsername })
+      }
       return { error: 'Invalid credentials' }
     }
 
     const isValid = await verifyPassword(password, user.password)
     if (!isValid) {
+      if (process.env.NODE_ENV === 'production') {
+        console.error('Login attempt failed: Invalid password', { username: trimmedUsername, userId: user.id })
+      }
       return { error: 'Invalid credentials' }
     }
 
     return { user: { id: user.id, username: user.username, role: user.role, name: user.name } }
   } catch (error) {
-    console.error('Login error:', error)
+    // Enhanced error logging
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('Login error:', {
+      message: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
+      type: error?.constructor?.name
+    })
+    
+    // Check for database connection errors
+    if (errorMessage.includes('connection') || errorMessage.includes('timeout') || errorMessage.includes('ECONNREFUSED')) {
+      return { error: 'Database connection failed. Please check your database configuration.' }
+    }
+    
     return { error: 'An error occurred during login' }
   }
 }
