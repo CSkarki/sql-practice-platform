@@ -16,6 +16,9 @@ export async function POST(request: NextRequest) {
       // Log error in production for debugging (without sensitive data)
       if (process.env.NODE_ENV === 'production') {
         console.error('Login failed:', { username: username.trim(), error: result.error })
+      } else {
+        // In development, log full error for debugging
+        console.error('Login failed:', result.error)
       }
       return NextResponse.json({ error: result.error }, { status: 401 })
     }

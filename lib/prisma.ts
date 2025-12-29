@@ -28,3 +28,22 @@ if (process.env.NODE_ENV === 'production') {
     })
 }
 
+// In development, log connection attempts for debugging
+if (process.env.NODE_ENV === 'development') {
+  // Don't block startup, but log connection attempts
+  prisma.$connect()
+    .then(() => {
+      console.log('✅ Database connected successfully (dev)')
+    })
+    .catch((error) => {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      if (errorMessage.includes("Can't reach database server")) {
+        console.error('❌ Database connection failed: Azure SQL Server firewall may be blocking your IP')
+        console.error('💡 Solution: Add your IP address to Azure SQL Server firewall rules')
+        console.error('   See: LOCAL_DEVELOPMENT.md for instructions')
+      } else {
+        console.error('❌ Database connection failed:', errorMessage)
+      }
+    })
+}
+

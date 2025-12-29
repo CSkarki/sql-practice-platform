@@ -52,8 +52,14 @@ export async function login(username: string, password: string) {
     })
     
     // Check for database connection errors
-    if (errorMessage.includes('connection') || errorMessage.includes('timeout') || errorMessage.includes('ECONNREFUSED')) {
-      return { error: 'Database connection failed. Please check your database configuration.' }
+    if (errorMessage.includes("Can't reach database server") || 
+        errorMessage.includes('connection') || 
+        errorMessage.includes('timeout') || 
+        errorMessage.includes('ECONNREFUSED') ||
+        errorMessage.includes('ENOTFOUND')) {
+      return { 
+        error: 'Database connection failed. Your local IP may be blocked by Azure SQL Server firewall. Please add your IP to the firewall rules in Azure Portal.' 
+      }
     }
     
     return { error: 'An error occurred during login' }
