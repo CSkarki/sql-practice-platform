@@ -1,0 +1,93 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid()) @db.NVarChar(100)
+  username  String   @unique @db.NVarChar(100)
+  password  String   @db.NVarChar(255)
+  role      String   @db.NVarChar(50) // "admin" or "student"
+  name      String?  @db.NVarChar(255)
+  email     String?  @db.NVarChar(255)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  createdPractices PracticeBank[]   @relation("CreatedBy")
+  scheduledTests   ScheduledTest[]
+  submissions      TestSubmission[]
+}
+
+model PracticeBank {
+  id             String   @id @default(cuid()) @db.NVarChar(100)
+  title          String   @db.NVarChar(500)
+  businessDomain String   @db.NVarChar(100) // Banking, Retail, ERP, Travel, Telecom, etc.
+  category       String   @db.NVarChar(50) // simple, medium, intermediate, advanced
+  focusAreas     String   @db.NVarChar(Max) // JSON array: ["Aggregate Functions", "GROUP BY", "JOINs", etc.]
+  questions      String   @db.NVarChar(Max) // JSON array of questions (without answers for students)
+  answers        String   @db.NVarChar(Max) // JSON array of questions with answers and explanations (for teachers)
+  createdById    String   @db.NVarChar(100)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  createdBy      User            @relation("CreatedBy", fields: [createdById], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  scheduledTests ScheduledTest[]
+}
+
+model ScheduledTest {
+  id             String    @id @default(cuid()) @db.NVarChar(100)
+  practiceBankId String    @db.NVarChar(100)
+  studentId      String    @db.NVarChar(100)
+  scheduledDate  DateTime
+  dueDate        DateTime?
+  status         String    @default("scheduled") @db.NVarChar(50) // scheduled, in_progress, submitted, reviewed
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  practiceBank PracticeBank     @relation(fields: [practiceBankId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  student      User             @relation(fields: [studentId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  submissions  TestSubmission[]
+  answers      StudentAnswer[]
+}
+
+model StudentAnswer {
+  id              String   @id @default(cuid()) @db.NVarChar(100)
+  scheduledTestId String   @db.NVarChar(100)
+  questionId      String   @db.NVarChar(50) // Index or ID of the question
+  answerText      String   @db.NVarChar(Max)
+  isCorrect       Boolean? @db.Bit // null until reviewed
+  submittedAt     DateTime @default(now())
+
+  // Relations
+  scheduledTest ScheduledTest @relation(fields: [scheduledTestId], references: [id])
+
+  @@unique([scheduledTestId, questionId])
+}
+
+model TestSubmission {
+  id              String    @id @default(cuid()) @db.NVarChar(100)
+  scheduledTestId String    @unique @db.NVarChar(100)
+  studentId       String    @db.NVarChar(100)
+  submittedAt     DateTime  @default(now())
+  reviewedAt      DateTime?
+  reviewedBy      String?   @db.NVarChar(100) // Admin user ID who reviewed
+  autoReviewed    Boolean   @default(false) @db.Bit
+  answersReleased Boolean   @default(false) @db.Bit
+  score           Float? // Percentage score
+  feedback        String?   @db.NVarChar(Max) // Teacher feedback
+
+  // Relations
+  scheduledTest ScheduledTest @relation(fields: [scheduledTestId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  student       User          @relation(fields: [studentId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
