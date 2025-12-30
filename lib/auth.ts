@@ -56,9 +56,14 @@ export async function login(username: string, password: string) {
         errorMessage.includes('connection') || 
         errorMessage.includes('timeout') || 
         errorMessage.includes('ECONNREFUSED') ||
-        errorMessage.includes('ENOTFOUND')) {
+        errorMessage.includes('ENOTFOUND') ||
+        errorMessage.includes('P1001') ||
+        errorMessage.includes('P1017')) {
+      const isProduction = process.env.NODE_ENV === 'production'
       return { 
-        error: 'Database connection failed. Your local IP may be blocked by Azure SQL Server firewall. Please add your IP to the firewall rules in Azure Portal.' 
+        error: isProduction 
+          ? 'Database connection failed. Please check Azure SQL Server firewall rules and ensure "Allow Azure services" is enabled.'
+          : 'Database connection failed. Your local IP may be blocked by Azure SQL Server firewall. Please add your IP to the firewall rules in Azure Portal.'
       }
     }
     

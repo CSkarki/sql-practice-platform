@@ -48,9 +48,21 @@ export async function POST(request: NextRequest) {
       })
     }
     
+    // In production, provide more helpful error messages
+    const isProduction = process.env.NODE_ENV === 'production'
+    const isDbError = errorMessage.includes('database') || 
+                      errorMessage.includes('connection') ||
+                      errorMessage.includes("Can't reach")
+    
     return NextResponse.json({ 
-      error: 'Internal server error',
-      ...(process.env.NODE_ENV === 'development' && { details: errorMessage })
+      error: isDbError && isProduction
+        ? 'Database connection error. Please check Vercel logs and Azure SQL Server configuration.'
+        : 'Internal server error',
+      ...(isProduction && { 
+        // In production, log to console but don't expose details to client
+        _logged: true 
+      }),
+      ...(!isProduction && { details: errorMessage })
     }, { status: 500 })
   }
 }
