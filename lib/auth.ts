@@ -67,6 +67,16 @@ export async function login(username: string, password: string) {
       }
     }
     
+    // Provide more specific error message in production
+    if (process.env.NODE_ENV === 'production') {
+      if (errorMessage.includes('40615') || errorMessage.includes('not allowed to access')) {
+        return { error: 'Database firewall blocking connection. Please enable "Allow Azure services" in Azure SQL Server firewall settings.' }
+      }
+      if (errorMessage.includes('Login failed') || errorMessage.includes('authentication')) {
+        return { error: 'Database authentication failed. Please check DATABASE_URL credentials in Vercel.' }
+      }
+    }
+    
     return { error: 'An error occurred during login' }
   }
 }
