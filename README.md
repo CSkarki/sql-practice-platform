@@ -74,41 +74,50 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Deployment
 
-### Quick Deployment to Vercel
+### Deploy to Azure App Service
 
-See [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) for detailed step-by-step instructions.
+This application is designed to run on Azure App Service with Azure SQL Database.
 
-**Quick Steps:**
-1. Push code to GitHub
-2. Import project in Vercel
-3. Set up PostgreSQL database (Vercel Postgres recommended)
-4. Add environment variables in Vercel:
-   - `DATABASE_URL` (PostgreSQL connection string)
-   - `OPENAI_API_KEY` (for AI question generation)
-5. Update `prisma/schema.prisma` to use `postgresql` provider
-6. Deploy and run migrations
+**Prerequisites:**
+- Azure SQL Database already set up
+- Azure account with App Service permissions
 
-### Database for Production
+**Quick Deployment Steps:**
 
-**Important**: This application uses Azure SQL Server for production.
+1. **Create Azure App Service:**
+   - Go to [Azure Portal](https://portal.azure.com) → **Create a resource** → **Web App**
+   - **Name:** `sql-practice-platform` (must be globally unique)
+   - **Runtime:** Node.js 22 LTS (or latest LTS - Node 20 LTS reaches EOL in April 2026)
+   - **OS:** Linux (recommended)
+   - **Plan:** B1 Basic (~$13/month) or S1 Standard (~$70/month)
+   - **Region:** Same as your SQL Database
+   - Click **Create**
 
-1. Set up Azure SQL Server:
-   - Create SQL Database in [Azure Portal](https://portal.azure.com)
-   - Get connection details (server, database, username, password)
-   - Configure firewall rules
+2. **Configure Environment Variables:**
+   - Go to App Service → **Configuration** → **Application settings**
+   - Add:
+     - `DATABASE_URL` = Your Azure SQL connection string
+     - `OPENAI_API_KEY` = Your OpenAI API key
+     - `NODE_ENV` = `production`
+   - Click **Save**
 
-2. Connection String Format:
-   ```
-   sqlserver://SERVER.database.windows.net:1433;database=DATABASE_NAME;user=USERNAME@SERVER;password=PASSWORD;encrypt=true;trustServerCertificate=false
-   ```
+3. **Configure SQL Firewall:**
+   - Go to your SQL Server → **Networking**
+   - Remove any `0.0.0.0/255.255.255.255` rules (security risk!)
+   - Enable **"Allow Azure services and resources"** (recommended)
+   - OR add App Service outbound IPs (found in App Service → Properties)
+   - Click **Save**
 
-3. Add to `.env` file:
-   ```env
-   DATABASE_URL="sqlserver://your-server.database.windows.net:1433;database=sql-practice-db;user=admin@your-server;password=YourPassword123!;encrypt=true;trustServerCertificate=false"
-   ```
+4. **Set Up GitHub Actions (Auto-Deploy):**
+   - Go to App Service → **Get publish profile** (download XML)
+   - In GitHub repo → **Settings** → **Secrets** → **Actions**
+   - Add secrets:
+     - `AZURE_WEBAPP_PUBLISH_PROFILE` = (paste entire XML content)
+     - `DATABASE_URL` = (your SQL connection string)
+     - `OPENAI_API_KEY` = (your OpenAI key)
+   - Update `.github/workflows/azure-deploy.yml` with your app name
+   - Push to `main` branch → Auto-deploys!
 
-4. Run migrations: `npm run db:migrate:deploy`
-5. Seed initial users: `npm run db:seed`
 
 ## Project Structure
 
@@ -213,7 +222,7 @@ NODE_ENV=development
 **Note:** 
 - `DATABASE_URL` is required - use your Azure SQL Server connection string
 - `OPENAI_API_KEY` is required for auto-generating questions. Get your API key from [OpenAI Platform](https://platform.openai.com/api-keys)
-- For Azure SQL: Ensure firewall allows your IP address and Azure services
+- **Security**: Never use `0.0.0.0/255.255.255.255` firewall rule in production. Enable "Allow Azure services" instead.
 
 ## License
 

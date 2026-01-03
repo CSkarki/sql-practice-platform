@@ -57,10 +57,10 @@ export async function GET() {
     
     // Provide specific recommendations based on error
     if (errorMessage.includes('Environment variable not found')) {
-      diagnostics.recommendations.push('DATABASE_URL environment variable is not set in Vercel')
-      diagnostics.recommendations.push('Go to Vercel Dashboard → Settings → Environment Variables → Add DATABASE_URL')
+      diagnostics.recommendations.push('DATABASE_URL environment variable is not set')
+      diagnostics.recommendations.push('Go to Azure App Service → Configuration → Application settings → Add DATABASE_URL')
     } else if (errorMessage.includes('not allowed to access') || errorMessage.includes('firewall')) {
-      diagnostics.recommendations.push('Azure SQL Server firewall is blocking Vercel IP')
+      diagnostics.recommendations.push('Azure SQL Server firewall is blocking connection')
       diagnostics.recommendations.push('Go to Azure Portal → SQL Server → Networking → Enable "Allow Azure services"')
     } else if (errorMessage.includes('Login failed') || errorMessage.includes('authentication')) {
       diagnostics.recommendations.push('Database credentials are incorrect')
@@ -79,7 +79,7 @@ export async function GET() {
 
   // Add general recommendations
   if (!diagnostics.environment.hasDatabaseUrl) {
-    diagnostics.recommendations.push('DATABASE_URL is missing - add it to Vercel environment variables')
+    diagnostics.recommendations.push('DATABASE_URL is missing - add it to Azure App Service environment variables')
   }
 
   if (diagnostics.database.connected && !diagnostics.database.hasUsers) {

@@ -46,6 +46,7 @@ const FOCUS_AREAS = [
 export default function NewPracticePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [formData, setFormData] = useState({
     title: '',
     businessDomain: 'Banking',
@@ -55,6 +56,11 @@ export default function NewPracticePage() {
   })
   const [questions, setQuestions] = useState<any[]>([])
   const [answers, setAnswers] = useState<any[]>([])
+
+  function showNotification(message: string, type: 'success' | 'error' = 'success') {
+    setNotification({ message, type })
+    setTimeout(() => setNotification(null), 5000)
+  }
 
   function handleFocusAreaChange(area: string) {
     setFormData(prev => ({
@@ -67,11 +73,11 @@ export default function NewPracticePage() {
 
   async function generateQuestions() {
     if (!formData.title) {
-      alert('Please enter a title first')
+      showNotification('Please enter a title first', 'error')
       return
     }
     if (formData.focusAreas.length === 0) {
-      alert('Please select at least one focus area')
+      showNotification('Please select at least one focus area', 'error')
       return
     }
 
@@ -105,13 +111,13 @@ export default function NewPracticePage() {
         }))
         setQuestions(generatedQuestions)
         setAnswers(generatedAnswers)
-        alert(`Successfully generated ${generatedQuestions.length} questions!`)
+        showNotification(`Successfully generated ${generatedQuestions.length} questions!`, 'success')
       } else {
-        alert(data.error || 'Failed to generate questions. Please check your OpenAI API key in .env file.')
+        showNotification(data.error || 'Failed to generate questions. Please check your OpenAI API key.', 'error')
       }
     } catch (error) {
       console.error('Error generating questions:', error)
-      alert('An error occurred while generating questions. Please check your OpenAI API key.')
+      showNotification('An error occurred while generating questions. Please check your OpenAI API key.', 'error')
     } finally {
       setLoading(false)
     }
@@ -160,11 +166,11 @@ export default function NewPracticePage() {
         router.push('/admin/practices')
       } else {
         const data = await res.json()
-        alert(data.error || 'Failed to create practice')
+        showNotification(data.error || 'Failed to create practice', 'error')
       }
     } catch (error) {
       console.error('Error creating practice:', error)
-      alert('An error occurred')
+      showNotification('An error occurred', 'error')
     } finally {
       setLoading(false)
     }
@@ -172,6 +178,53 @@ export default function NewPracticePage() {
 
   return (
     <div className="px-4 py-6 sm:px-0">
+      {/* Notification Toast */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 max-w-md w-full shadow-lg rounded-lg pointer-events-auto ${
+          notification.type === 'success' 
+            ? 'bg-green-50 border border-green-200' 
+            : 'bg-red-50 border border-red-200'
+        }`}>
+          <div className="p-4">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                {notification.type === 'success' ? (
+                  <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </div>
+              <div className="ml-3 w-0 flex-1">
+                <p className={`text-sm font-medium ${
+                  notification.type === 'success' ? 'text-green-800' : 'text-red-800'
+                }`}>
+                  {notification.message}
+                </p>
+              </div>
+              <div className="ml-4 flex-shrink-0 flex">
+                <button
+                  onClick={() => setNotification(null)}
+                  className={`inline-flex rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                    notification.type === 'success'
+                      ? 'text-green-500 hover:text-green-600 focus:ring-green-500'
+                      : 'text-red-500 hover:text-red-600 focus:ring-red-500'
+                  }`}
+                >
+                  <span className="sr-only">Close</span>
+                  <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Create New Practice Set</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">

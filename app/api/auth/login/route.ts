@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({ 
       error: isDbError && isProduction
-        ? 'Database connection error. Please check Vercel logs and Azure SQL Server configuration.'
+        ? 'Database connection error. Please check Azure App Service logs and Azure SQL Server configuration.'
         : 'Internal server error',
       ...(isProduction && { 
         // In production, log to console but don't expose details to client

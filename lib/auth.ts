@@ -73,7 +73,7 @@ export async function login(username: string, password: string) {
         return { error: 'Database firewall blocking connection. Please enable "Allow Azure services" in Azure SQL Server firewall settings.' }
       }
       if (errorMessage.includes('Login failed') || errorMessage.includes('authentication')) {
-        return { error: 'Database authentication failed. Please check DATABASE_URL credentials in Vercel.' }
+        return { error: 'Database authentication failed. Please check DATABASE_URL credentials in Azure App Service.' }
       }
     }
     

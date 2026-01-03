@@ -2,6 +2,91 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
 import OpenAI from 'openai'
 
+// Banking Database Schema
+const BANKING_SCHEMA = `
+Branches (
+    BranchID INT PRIMARY KEY,
+    BranchCode VARCHAR(10) UNIQUE,
+    BranchName VARCHAR(100),
+    City VARCHAR(50),
+    State VARCHAR(50),
+    CreatedDate DATE
+)
+
+Customers (
+    CustomerID INT PRIMARY KEY,
+    FirstName VARCHAR(50),
+    LastName VARCHAR(50),
+    DOB DATE,
+    Email VARCHAR(100),
+    Phone VARCHAR(20),
+    CreatedDate DATE,
+    Status VARCHAR(20)
+)
+
+Accounts (
+    AccountID INT PRIMARY KEY,
+    AccountNumber VARCHAR(20) UNIQUE,
+    AccountType VARCHAR(30),
+    BranchID INT,
+    CurrentBalance DECIMAL(18,2),
+    OpenDate DATE,
+    Status VARCHAR(20),
+    FOREIGN KEY (BranchID) REFERENCES Branches(BranchID)
+)
+
+AccountOwnerships (
+    OwnershipID INT PRIMARY KEY,
+    AccountID INT,
+    CustomerID INT,
+    OwnershipType VARCHAR(20),
+    FOREIGN KEY (AccountID) REFERENCES Accounts(AccountID),
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID)
+)
+
+Transactions (
+    TransactionID BIGINT PRIMARY KEY,
+    AccountID INT,
+    TransactionDate DATETIME,
+    TransactionType VARCHAR(30),
+    Amount DECIMAL(18,2),
+    BalanceAfter DECIMAL(18,2),
+    Description VARCHAR(200),
+    FOREIGN KEY (AccountID) REFERENCES Accounts(AccountID)
+)
+
+Transfers (
+    TransferID BIGINT PRIMARY KEY,
+    FromAccountID INT,
+    ToAccountID INT,
+    Amount DECIMAL(18,2),
+    TransferDate DATETIME,
+    FOREIGN KEY (FromAccountID) REFERENCES Accounts(AccountID),
+    FOREIGN KEY (ToAccountID) REFERENCES Accounts(AccountID)
+)
+
+Loans (
+    LoanID INT PRIMARY KEY,
+    CustomerID INT,
+    LoanType VARCHAR(50),
+    Principal DECIMAL(18,2),
+    InterestRate DECIMAL(5,2),
+    StartDate DATE,
+    EndDate DATE,
+    Status VARCHAR(20),
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID)
+)
+
+LoanPayments (
+    PaymentID BIGINT PRIMARY KEY,
+    LoanID INT,
+    DueDate DATE,
+    PaymentDate DATE,
+    Amount DECIMAL(18,2),
+    FOREIGN KEY (LoanID) REFERENCES Loans(LoanID)
+)
+`
+
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth('admin')
@@ -22,26 +107,39 @@ export async function POST(request: NextRequest) {
 
     // Build the prompt for OpenAI
     const focusAreasText = focusAreas.join(', ')
+    
+    // Use banking schema if domain is Banking
+    const isBanking = businessDomain.toLowerCase() === 'banking'
+    const schemaSection = isBanking 
+      ? `\n\n=== REQUIRED DATABASE SCHEMA (MUST USE FOR ALL QUESTIONS) ===\n\n${BANKING_SCHEMA}\n\n=== END OF SCHEMA ===\n\nCRITICAL REQUIREMENTS:\n- ALL questions MUST use ONLY the tables and columns listed above\n- Use exact table names: Branches, Customers, Accounts, AccountOwnerships, Transactions, Transfers, Loans, LoanPayments\n- Use exact column names as shown in the schema\n- Do NOT create or reference any other tables or columns\n- All SQL queries must work with this exact schema structure`
+      : `\n\nGenerate realistic database schemas relevant to ${businessDomain} business scenarios.`
+    
     const prompt = `You are an expert SQL instructor creating practice questions for ${category} level students.
 
 Business Domain: ${businessDomain}
 Difficulty Level: ${category}
 Focus Areas: ${focusAreasText}
-Number of Questions: ${numQuestions}
+Number of Questions: ${numQuestions}${schemaSection}
 
 Generate ${numQuestions} SQL practice questions with the following format for each question:
 1. A realistic business scenario question related to ${businessDomain}
-2. A database schema (table structure) relevant to the question
-3. The correct SQL query answer
+2. ${isBanking ? 'Use the EXACT database schema provided above - copy it exactly in the schema field' : 'A database schema (table structure) relevant to the question'}
+3. The correct SQL query answer using ${isBanking ? 'ONLY the tables and columns from the provided schema' : 'the schema you define'}
 4. A detailed explanation of why the answer is correct
 5. Key SQL concepts covered
 
 Focus on these areas: ${focusAreasText}
 
+${isBanking ? `\nSCHEMA USAGE RULES FOR BANKING DOMAIN:
+- For the "schema" field in each question, include the relevant table definitions from the schema above
+- For the "answer" field, write SQL queries using ONLY: Branches, Customers, Accounts, AccountOwnerships, Transactions, Transfers, Loans, LoanPayments
+- Example question types: finding customer accounts, calculating balances, transaction history, loan payments, branch statistics, account transfers, etc.
+- All column names must match exactly: CustomerID, AccountID, BranchID, TransactionID, etc.` : ''}
+
 Return the response as a JSON array where each object has:
 - question: string (the question text)
-- schema: string (table definitions)
-- answer: string (the correct SQL query)
+- schema: string (${isBanking ? 'relevant table definitions from the schema above (copy exact structure)' : 'table definitions relevant to the question'})
+- answer: string (the correct SQL query ${isBanking ? 'using ONLY the provided schema tables' : ''})
 - explanation: string (detailed explanation)
 - concepts: string (comma-separated key concepts)
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "🔍 Verifying Vercel Setup..."
+echo "🔍 Verifying Azure Setup..."
 echo ""
 echo "1. Check if DATABASE_URL is in local .env:"
 if grep -q "DATABASE_URL" .env 2>/dev/null; then
@@ -27,8 +27,8 @@ else
 fi
 
 echo ""
-echo "📋 Next Steps for Vercel:"
-echo "   1. Add DATABASE_URL to Vercel environment variables"
-echo "   2. Enable 'Allow Azure services' in Azure Portal"
+echo "📋 Next Steps for Azure App Service:"
+echo "   1. Add DATABASE_URL to Azure App Service environment variables"
+echo "   2. Enable 'Allow Azure services' in Azure Portal SQL Server firewall"
 echo "   3. Seed users in production: DATABASE_URL='...' npm run db:seed"
-echo "   4. Redeploy on Vercel"
+echo "   4. Deploy to Azure App Service"
